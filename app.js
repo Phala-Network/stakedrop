@@ -1,14 +1,14 @@
 const http = require('http');
 const https = require('https');
-var express = require("express");  
+const express = require("express");  
 const app = express();  
-var url = require('url')
+const url = require('url')
 
 const mysql = require('mysql');
 const param = {
-        host     : '121.37.186.0',
+        host     : 'localhost',
         user     : 'root',
-        password : 'Phala4@4',
+        password : '12345678',
         port     : 3306
 }
  

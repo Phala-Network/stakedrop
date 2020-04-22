@@ -1,0 +1,1 @@
+# stakedrop For KSM holders

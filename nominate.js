@@ -134,25 +134,16 @@ async function read_state(api, whitelist, archived, block_hash, start_era_number
     } else {
       stakers = await api.query.staking.erasStakers(start_era_number, nominee);
     }
+    let self_stake_amount = parse_human_string(stakers.own.toHuman()) * constants.UNIT;
+    array.push({nominator: nominee, nominee: nominee, amount: self_stake_amount, flag: 0});
+    query.query("Insert into stakedrop.staker(nominee, nominator, amount, era) values('" + nominee + "', '" + nominee + "',  " + self_stake_amount + ", " + start_era_number + ")");
+
     if (stakers.others.length > 0) {
       for (index1 in stakers.others) {
         if (stakers.others[index1].who != undefined) {
           let prefix = isKusama ? 2 : 42;
           let nominator = encodeAddress(stakers.others[index1].who, prefix);
-          let amount = 0;
-          try {
-            amount = stakers.others[index1].value._raw.toNumber()/constants.EXPO;
-          } catch (err) {
-            let amount_str = stakers.others[index1].value._raw.toHuman();
-            amount_str = amount_str.split(' ')[0];
-            if (amount_str.endsWith("k")) {
-              amount = Math.round(parseFloat(amount_str.slice(0, -1)) * 1000 * constants.UNIT);
-            } else if (amount_str.endsWith("m")) {
-              amount = Math.round(parseFloat(amount_str.slice(0, -1)) * 1e6 * constants.UNIT);
-            } else {
-              console.log("unknown amount format: " + amount_str);
-            }
-          }
+          let amount = parse_human_string(stakers.others[index1].value._raw.toHuman()) * constants.UNIT;
           console.log(nominator + ' nominate to ' + nominee + ': ' + amount);
           query.query("Insert into stakedrop.staker(nominee, nominator, amount, era) values('" + nominee + "', '" + nominator + "',  " + amount + ", " + start_era_number + ")");
 
@@ -174,6 +165,20 @@ async function read_state(api, whitelist, archived, block_hash, start_era_number
   }
 
   return array;
+}
+
+function parse_human_string(amount_str) {
+  let amount = 0;
+  amount_str = amount_str.split(' ')[0];
+  if (amount_str.endsWith("k")) {
+    amount = Math.round(parseFloat(amount_str.slice(0, -1)) * 1000);
+  } else if (amount_str.endsWith("m")) {
+    amount = Math.round(parseFloat(amount_str.slice(0, -1)) * 1e6);
+  } else {
+    amount = Math.round(parseFloat(amount_str));
+  }
+
+  return amount;
 }
 
 function insert_state(array, start_era_number) {

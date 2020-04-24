@@ -141,7 +141,7 @@ async function main() {
     console.log("\nend era: " + end_era + ", max era: " + max_era + ", loop: " + loop);
     if (end_era <= max_era) {
       let result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
-      if (result.length == 1 && result._value == 0) {
+      if (result.length == 1 && result[0]._value != end_era) {
         let nominators = query.query("select distinct nominator from stakedrop.nominate where start_era>=" + constants.START_ERA + " and start_era <=" + end_era);
         for (i in nominators) {
           let nominator = nominators[i].nominator;

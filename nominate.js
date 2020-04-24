@@ -77,7 +77,7 @@ async function main() {
     query.query("UPDATE stakedrop.dict set _value = 0 where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
 
     if (start_era_number <= cur_era_number) {
-      query.query("UPDATE stakedrop.dict set _value = 1 where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
+      query.query("UPDATE stakedrop.dict set _value = " + start_era_number + " where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
       
       let history_depth = (await api.query.staking.historyDepth()).toNumber();
       let block_hash;

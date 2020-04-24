@@ -15,6 +15,8 @@ const wsProvider = new WsProvider(url);
 const registry = new TypeRegistry();
 registry.register(init.types);
 
+const LAST_ERA_KEY = 'last_era';
+
 async function main() {
   let isKusama = url.indexOf("kusama") > 0;
   console.log("isKusama: " + isKusama);
@@ -37,6 +39,7 @@ async function main() {
   }
 
   const api = await ApiPromise.create({ provider: wsProvider, registry});
+  console.log("api is ready.");
 
   const block_time = api.consts.babe.expectedBlockTime.toNumber();
   const epoch_duration = api.consts.babe.epochDuration.toNumber();
@@ -51,6 +54,9 @@ async function main() {
     return;
   }
 
+  let result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
+  if (result == 0) query.query("INSERT into stakedrop.dict(_key, _value) values('" + constants.NOMINATE_LOCK_KEY + "', 0)");
+
   let loop = 0;
   while (true) {
     let cur_era_number;
@@ -63,12 +69,16 @@ async function main() {
       }
       console.log("\nstart era: " + start_era_number + ", current era: " + cur_era_number + ", loop: " + loop);
     } catch (error) {
-      console.log(error);
+      console.log('error:', error);
       await timer(1000 * 60);
       continue;
     }
     
+    query.query("UPDATE stakedrop.dict set _value = 0 where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
+
     if (start_era_number <= cur_era_number) {
+      query.query("UPDATE stakedrop.dict set _value = 1 where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
+      
       let history_depth = (await api.query.staking.historyDepth()).toNumber();
       let block_hash;
       let archived = false;
@@ -98,7 +108,7 @@ async function main() {
         merge_state(array, start_era_number);
 
       //
-      query.query("UPDATE stakedrop.dict set _value = '" + start_era_number + "' where _key = 'last_era'");
+      query.query("UPDATE stakedrop.dict set _value = '" + start_era_number + "' where _key = '" + LAST_ERA_KEY + "'");
 
       start_era_number ++;
       loop = 0;
@@ -267,17 +277,17 @@ function init_db() {
 
 function get_start_era_number(args) {
   let start_era = constants.START_ERA - 1; //1 era earlier than statistics 
-  let result = query.query("SELECT _value from stakedrop.dict where _key='last_era'");
+  let result = query.query("SELECT _value from stakedrop.dict where _key='" + LAST_ERA_KEY + "'");
   if (args.length >= 1) {
     start_era = parseInt(args[0]);
     if (result.length == 0) {
-      query.query("INSERT INTO stakedrop.dict(_key, _value) values('last_era', '" + start_era + "')");
+      query.query("INSERT INTO stakedrop.dict(_key, _value) values('" + LAST_ERA_KEY + "', '" + start_era + "')");
     }
   } else {
     if (result.length == 1) {
       start_era = parseInt(result[0]._value);
     } else {
-      query.query("INSERT INTO stakedrop.dict(_key, _value) values('last_era', '" + start_era + "')");
+      query.query("INSERT INTO stakedrop.dict(_key, _value) values('" + LAST_ERA_KEY + "', '" + start_era + "')");
     }
   }
 

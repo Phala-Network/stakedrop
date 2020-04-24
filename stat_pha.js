@@ -140,19 +140,22 @@ async function main() {
     let max_era = get_max_era();
     console.log("\nend era: " + end_era + ", max era: " + max_era + ", loop: " + loop);
     if (end_era <= max_era) {
-      let nominators = query.query("select distinct nominator from stakedrop.nominate where start_era>=" + constants.START_ERA + " and start_era <=" + end_era);
-      for (i in nominators) {
-        let nominator = nominators[i].nominator;
-        get_point(nominator, end_era);
+      let result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
+      if (result.length == 1 && result._value == 0) {
+        let nominators = query.query("select distinct nominator from stakedrop.nominate where start_era>=" + constants.START_ERA + " and start_era <=" + end_era);
+        for (i in nominators) {
+          let nominator = nominators[i].nominator;
+          get_point(nominator, end_era);
+        }
+
+        get_pha(end_era);
+
+        end_era++;
+        if (end_era >= constants.START_ERA + LEVEL3) break;
+
+        loop = 0;
+        await timer(1000);
       }
-
-      get_pha(end_era);
-
-      end_era++;
-      if (end_era >= constants.START_ERA + LEVEL3) break;
-
-      loop = 0;
-      await timer(1000);
     } else {
       loop++;
       await timer(1000 * 60 * 5);

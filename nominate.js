@@ -56,6 +56,8 @@ async function main() {
 
   let result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
   if (result == 0) query.query("INSERT into stakedrop.dict(_key, _value) values('" + constants.NOMINATE_LOCK_KEY + "', 0)");
+  result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_HEARTBEAT_KEY + "'");
+  if (result == 0) query.query("INSERT into stakedrop.dict(_key, _value) values('" + constants.NOMINATE_HEARTBEAT_KEY + "', " + (new Date().getTime()) + ")");
 
   let loop = 0;
   while (true) {
@@ -75,6 +77,7 @@ async function main() {
     }
     
     query.query("UPDATE stakedrop.dict set _value = 0 where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
+    query.query("UPDATE stakedrop.dict set _value = " + (new Date().getTime()) + " where _key = '" + constants.NOMINATE_HEARTBEAT_KEY + "'");
 
     if (start_era_number <= cur_era_number) {
       query.query("UPDATE stakedrop.dict set _value = " + start_era_number + " where _key = '" + constants.NOMINATE_LOCK_KEY + "'");

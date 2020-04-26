@@ -1,5 +1,6 @@
 const query = require("./query_db");
 const constants = require("./constants");
+const execSync = require('child_process').execSync;
 
 const timer = ms => new Promise( res => setTimeout(res, ms));
 
@@ -128,7 +129,7 @@ async function main() {
   } else {
     let result1 = query.query("SELECT max(end_era) as end_era from stakedrop.stat_point");
     let result2 = query.query("SELECT max(end_era) as end_era from stakedrop.stat_pha");
-    end_era = result1.end_era > result2.end_era ? result2.end_era : result1.end_era;
+    end_era = result1[0].end_era > result2[0].end_era ? result2[0].end_era : result1[0].end_era;
     if (end_era == undefined) end_era = constants.START_ERA;
   }
 
@@ -157,6 +158,12 @@ async function main() {
         await timer(1000);
       }
     } else {
+      let result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_HEARTBEAT_KEY + "'");
+      if (result.length == 1 && new Date().getTime() - result[0]._value > 15 * 60 * 1000) {
+        const output = execSync('sudo systemctl restart lockdrop_nominate', { encoding: 'utf-8' });
+        console.log('restart nominate service: ', output);
+      }
+      
       loop++;
       await timer(1000 * 60 * 5);
     }

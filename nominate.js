@@ -297,7 +297,7 @@ function get_start_era_number(args) {
     }
   } else {
     if (result.length == 1) {
-      start_era = parseInt(result[0]._value);
+      start_era = parseInt(result[0]._value) + 1;
     } else {
       query.query("INSERT INTO stakedrop.dict(_key, _value) values('" + LAST_ERA_KEY + "', '" + start_era + "')");
     }

@@ -10,6 +10,7 @@ const LEVEL3 = LEVEL1 * 3;
 
 const ERAS_PER_DAY = 4;
 const PHA_SUPPLY = 27000000;
+const MAX_POINT = 14715243;
 
 /*function calc_rank(day) {
   if (day < LEVEL1) return 0;
@@ -25,8 +26,8 @@ function calc_point(eras, value) {
   if (eras < ERAS_PER_DAY * LEVEL1) return 0;
   if (eras > ERAS_PER_DAY * LEVEL3) eras = ERAS_PER_DAY * LEVEL3;
 
-  //return eras / 4 * Math.pow(1.01, (eras - 120) / 120) * value;
-  return eras / ERAS_PER_DAY * Math.pow(1.01, (eras - ERAS_PER_DAY * LEVEL1) / (ERAS_PER_DAY * LEVEL1)) * value;
+  //return eras / 4 /30 * Math.pow(1.01, (eras - 120) / 4 * value;
+  return eras / (ERAS_PER_DAY  * LEVEL1 ) * Math.pow(1.01, (eras - ERAS_PER_DAY * LEVEL1) / ERAS_PER_DAY) * value;
 }
 
 function get_point(nominator, end_era) {
@@ -99,6 +100,8 @@ function get_pha(end_era) {
   let total_points = result[0].points;
   let total_est_points = result[0].points_est;
   if (total_points == null) return;
+  if (total_points > MAX_POINT)
+    total_points = MAX_POINT;
   console.log("totoal points: " + total_points);
   console.log("totoal estimate points: " + total_est_points);
   result = query.query("SELECT nominator, point, point_est, eras from stakedrop.stat_point where end_era=" + end_era);
@@ -142,7 +145,7 @@ async function main() {
     console.log("\nend era: " + end_era + ", max era: " + max_era + ", loop: " + loop);
     if (end_era <= max_era) {
       let result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_LOCK_KEY + "'");
-      if (result.length == 1 && result[0]._value != end_era) {
+      if (result.length == 1 && parseInt(result[0]._value) != end_era) {
         let nominators = query.query("select distinct nominator from stakedrop.nominate where start_era>=" + constants.START_ERA + " and start_era <=" + end_era);
         for (i in nominators) {
           let nominator = nominators[i].nominator;

@@ -31,7 +31,7 @@ function calc_point(eras, value) {
 }
 
 function get_point(nominator, end_era) {
-  if (end_era >= constants.START_ERA + LEVEL3) {
+  if (end_era >= constants.START_ERA + ERAS_PER_DAY * LEVEL3) {
     //end_era = constants.START_ERA + LEVEL3 - 1;
     return;
   }
@@ -57,7 +57,7 @@ function get_point(nominator, end_era) {
     }
   }
 
-  console.log("data: " + JSON.stringify(data));
+  //console.log("data: " + JSON.stringify(data));
 
   let segments = [];
   while (data.length > 0) {
@@ -74,7 +74,7 @@ function get_point(nominator, end_era) {
 
     data = tmp;
   }
-  console.log("segments: " + JSON.stringify(segments));
+  //console.log("segments: " + JSON.stringify(segments));
 
   let points_est = 0.0;
   for (i in segments) {
@@ -155,7 +155,7 @@ async function main() {
         get_pha(end_era);
 
         end_era++;
-        if (end_era >= constants.START_ERA + LEVEL3) break;
+        if (end_era >= constants.START_ERA +  ERAS_PER_DAY * LEVEL3) break;
 
         loop = 0;
         await timer(1000);

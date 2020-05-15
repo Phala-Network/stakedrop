@@ -40,11 +40,11 @@ app.get("/whitelist", function(req, res) {
 });
 
 // whitelist_stake_sum?stash=&era=
-app.get("/whitelist_stake_sum", function(req, res) {
+app.get("/whitelist_stake_sum", async function(req, res) {
         console.log(req.url);
         let q = url.parse(req.url, true);
         let stash = q.query.stash;
-        let era = q.query.era;
+        let era = await query_max_era(q.query.era);
 
         if (!validate_era(era) || !validate_accountid(stash)) {
                 o = {'status':'error'};

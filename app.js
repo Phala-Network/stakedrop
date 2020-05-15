@@ -58,11 +58,11 @@ app.get("/whitelist_stake_sum", function(req, res) {
 });
 
 // whitelist_stake_info?stash=&era=
-app.get("/whitelist_stake_info", function(req, res) {
+app.get("/whitelist_stake_info", async function(req, res) {
         console.log(req.url);
         let q = url.parse(req.url, true);
         let stash = q.query.stash;
-        let era = q.query.era;
+        let era = await query_max_era(q.query.era);
 
         if (!validate_era(era) || !validate_accountid(stash)) {
                 o = {'status':'error'};
@@ -76,11 +76,11 @@ app.get("/whitelist_stake_info", function(req, res) {
 });
 
 // nominators?era=
-app.get("/nominators", function(req, res) {
+app.get("/nominators", async function(req, res) {
         console.log(req.url);
         let q = url.parse(req.url, true);
-        let era = q.query.era;
-
+        let era = await query_max_era(q.query.era);
+        
         if (!validate_era(era)) {
                 o = {'status':'error'};
                 res.send(JSON.stringify(o));
@@ -93,10 +93,10 @@ app.get("/nominators", function(req, res) {
 });
 
 // total_staking?era=
-app.get("/total_staking", function(req, res) {
+app.get("/total_staking", async function(req, res) {
         console.log(req.url);
         let q = url.parse(req.url, true);
-        let era = q.query.era;
+        let era = await query_max_era(q.query.era);
 
         if (!validate_era(era)) {
                 o = {'status':'error'};
@@ -110,11 +110,11 @@ app.get("/total_staking", function(req, res) {
 });
 
 // staking_info?nominator=&era=
-app.get("/staking_info", function(req, res) {
+app.get("/staking_info", async function(req, res) {
         console.log(req.url);
         let q = url.parse(req.url, true);
         let nominator = q.query.nominator;
-        let era = q.query.era;
+        let era = await query_max_era(q.query.era);
 
         if (!validate_era(era)) {
                 o = {'status':'error'};
@@ -150,11 +150,11 @@ app.get("/stake_amount", function(req, res) {
 
 // stakedrop_point?era=
 // stakedrop_point?nominator=&era=
-app.get("/stakedrop_point", function(req, res) {
+app.get("/stakedrop_point", async function(req, res) {
         console.log(req.url);
         let q = url.parse(req.url, true);
         let nominator = q.query.nominator;
-        let era = q.query.era;
+        let era = await query_max_era(q.query.era);
 
         if (!validate_era(era)) {
                 o = {'status':'error'};
@@ -173,11 +173,11 @@ app.get("/stakedrop_point", function(req, res) {
 
 // stakedrop_pha?era=
 // stakedrop_pha?nominator=&era=
-app.get("/stakedrop_pha", function(req, res) {
+app.get("/stakedrop_pha", async function(req, res) {
         console.log(req.url);
         let q = url.parse(req.url, true);
         let nominator = q.query.nominator;
-        let era = q.query.era;
+        let era = await query_max_era(q.query.era);
 
         if (!validate_era(era)) {
                 o = {'status':'error'};
@@ -211,8 +211,8 @@ app.get("/days", function(req, res) {
 });
 
 function query(res, sql) {
-        let connection = mysql.createConnection(param)
-        connection.query(sql, function (error, results, fields) {
+        let connection = mysql.createConnection(param);
+        connection.query(sql, function (error, results) {
                 if (error) {
                         console.log(error);
                         o = {'status':'error'};
@@ -227,16 +227,35 @@ function query(res, sql) {
         connection.end();
 }
 
+async function query_max_era(era) {
+        if (era) return era;
+
+        let result = await new Promise((resolve, reject) => {
+                let connection = mysql.createConnection(param);
+                connection.query("select max(start_era) as era from stakedrop.nominate", function (error, results) {
+                        if (error) {
+                                console.log(error);
+                                reject([]);
+                        };
+                        
+                        resolve(results);
+                });
+                connection.end();
+        });
+        
+        return result.length > 0 ? result[0].era : undefined;
+}
+
 function validate_era(era) {
         if (era == undefined) return false; 
 
         let reg = /^\d+$/;
-        return reg.test(era)
+        return reg.test(era);
 }
 
 function validate_accountid(account) {
         if (account == undefined) return false; 
 
-        let reg = /^[a-z0-9]+$/i
-        return account.length == 47 && reg.test(account)
+        let reg = /^[a-z0-9]+$/i;
+        return account.length == 47 && reg.test(account);
 }

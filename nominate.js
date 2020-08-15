@@ -9,7 +9,7 @@ const constants = require("./constants");
 const timer = ms => new Promise( res => setTimeout(res, ms));
 
 const append = true;
-//const url = 'ws://localhost:9944';
+//const url = 'wss://cc3-5.kusama.network/';
 const url = 'wss://kusama-rpc.polkadot.io';
 const wsProvider = new WsProvider(url);
 const registry = new TypeRegistry();
@@ -63,12 +63,13 @@ async function main() {
   while (true) {
     let cur_era_number;
     try {
-      let cur_era = await api.query.staking.currentEra();
+      /*let cur_era = await api.query.staking.currentEra();
       if (isBn(cur_era))
         cur_era_number = hexToNumber(bnToHex(cur_era));
       else {
         cur_era_number = cur_era._raw.toNumber();
-      }
+      }*/
+      cur_era_number = parseInt((await api.query.staking.currentEra()).toString());
       console.log("\nstart era: " + start_era_number + ", current era: " + cur_era_number + ", loop: " + loop);
     } catch (error) {
       console.log('error:', error);
@@ -146,7 +147,7 @@ async function read_state(api, whitelist, archived, block_hash, start_era_number
         if (stakers.others[index1].who != undefined) {
           let prefix = isKusama ? 2 : 42;
           let nominator = encodeAddress(stakers.others[index1].who, prefix);
-          let amount = parse_big_number(stakers.others[index1].value._raw);
+          let amount = parse_big_number(stakers.others[index1].value);
           console.log(nominator + ' nominate to ' + nominee + ': ' + amount);
           query.query("Insert into stakedrop.staker(nominee, nominator, amount, era) values('" + nominee + "', '" + nominator + "',  " + amount + ", " + start_era_number + ")");
 

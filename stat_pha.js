@@ -1,5 +1,6 @@
 const query = require("./query_db");
 const constants = require("./constants");
+const mail = require("./send_mail");
 const execSync = require('child_process').execSync;
 
 const timer = ms => new Promise( res => setTimeout(res, ms));
@@ -31,7 +32,7 @@ function calc_point(eras, value) {
 }
 
 function get_point(nominator, end_era) {
-  if (end_era >= constants.START_ERA + LEVEL3) {
+  if (end_era >= constants.START_ERA + ERAS_PER_DAY * LEVEL3 + 9) {
     //end_era = constants.START_ERA + LEVEL3 - 1;
     return;
   }
@@ -57,7 +58,7 @@ function get_point(nominator, end_era) {
     }
   }
 
-  console.log("data: " + JSON.stringify(data));
+  //console.log("data: " + JSON.stringify(data));
 
   let segments = [];
   while (data.length > 0) {
@@ -74,7 +75,7 @@ function get_point(nominator, end_era) {
 
     data = tmp;
   }
-  console.log("segments: " + JSON.stringify(segments));
+  //console.log("segments: " + JSON.stringify(segments));
 
   let points_est = 0.0;
   for (i in segments) {
@@ -155,16 +156,16 @@ async function main() {
         get_pha(end_era);
 
         end_era++;
-        if (end_era >= constants.START_ERA + LEVEL3) break;
-
-        loop = 0;
-        await timer(1000);
+        if (end_era >= constants.START_ERA + ERAS_PER_DAY * LEVEL3 + 9) break;
       }
+      loop = 0;
+      await timer(1000);
     } else {
       let result = query.query("select _value from stakedrop.dict where _key = '" + constants.NOMINATE_HEARTBEAT_KEY + "'");
       if (result.length == 1 && new Date().getTime() - result[0]._value > 15 * 60 * 1000) {
-        const output = execSync('sudo systemctl restart lockdrop_nominate', { encoding: 'utf-8' });
-        console.log('restart nominate service: ', output);
+	mail.send_mail()
+        //const output = execSync('sudo systemctl restart lockdrop_nominate', { encoding: 'utf-8' });
+        //console.log('restart nominate service: ', output);
       }
       
       loop++;
